@@ -2,6 +2,18 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Resources:
+  ConversationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Conversations
+      AttributeDefinitions:
+        - AttributeName: ConversationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ConversationId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
