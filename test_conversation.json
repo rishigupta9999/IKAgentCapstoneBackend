@@ -1,0 +1,19 @@
+{
+  "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+  "turns": [
+    {
+      "id": "turn-001",
+      "content": "Hello, how can I help you today?",
+      "speaker": "assistant",
+      "timestamp": "2024-01-15T10:30:00"
+    },
+    {
+      "id": "turn-002", 
+      "content": "I need help with my account",
+      "speaker": "user",
+      "timestamp": "2024-01-15T10:30:15"
+    }
+  ],
+  "created_at": "2024-01-15T10:30:00",
+  "updated_at": "2024-01-15T10:30:15"
+}
