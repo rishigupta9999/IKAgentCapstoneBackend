@@ -29,11 +29,6 @@ Resources:
           Properties:
             Path: /conversations
             Method: post
-        SaveConversationOptions:
-          Type: Api
-          Properties:
-            Path: /conversations
-            Method: options
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function
