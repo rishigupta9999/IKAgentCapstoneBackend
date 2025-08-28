@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import boto3
 from model.Conversation import Conversation
 from model.Turn import Turn
@@ -39,3 +39,28 @@ class ConversationsDao:
             created_at=datetime.fromisoformat(item['created_at']),
             updated_at=datetime.fromisoformat(item['updated_at'])
         )
+
+    def get_all_conversations(self) -> List[Conversation]:
+        response = self.table.scan()
+        conversations = []
+        
+        for item in response['Items']:
+            turns = []
+            for turn_data in item['turns']:
+                turn = Turn(
+                    id=turn_data['id'],
+                    content=turn_data['content'],
+                    speaker=turn_data['speaker'],
+                    timestamp=datetime.fromisoformat(turn_data['timestamp'])
+                )
+                turns.append(turn)
+            
+            conversation = Conversation(
+                conversation_id=item['ConversationId'],
+                turns=turns,
+                created_at=datetime.fromisoformat(item['created_at']),
+                updated_at=datetime.fromisoformat(item['updated_at'])
+            )
+            conversations.append(conversation)
+        
+        return conversations
