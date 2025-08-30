@@ -10,4 +10,4 @@ class Conversation:
     turns: List[Turn]
     created_at: datetime
     updated_at: datetime
-    conversation_analysis: ConversationAnalysis
+    conversation_analysis: ConversationAnalysis = None

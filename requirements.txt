@@ -1,1 +1,4 @@
 boto3
+langchain_core
+langchain-anthropic
+langgraph
