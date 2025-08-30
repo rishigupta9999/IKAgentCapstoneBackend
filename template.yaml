@@ -13,6 +13,8 @@ Resources:
         - AttributeName: ConversationId
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
 
   SaveConversationFunction:
     Type: AWS::Serverless::Function
@@ -45,6 +47,20 @@ Resources:
           Properties:
             Path: /conversations
             Method: get
+
+  ConversationsStreamHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: conversations_stream_handler.lambda_handler
+      Runtime: python3.9
+      Events:
+        ConversationsStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt ConversationsTable.StreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function

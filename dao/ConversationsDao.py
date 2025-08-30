@@ -4,6 +4,7 @@ from typing import Optional, List
 import boto3
 from model.Conversation import Conversation
 from model.Turn import Turn
+from model.ConversationAnalysis import ConversationAnalysis
 
 class ConversationsDao:
     def __init__(self, table_name: str = "Conversations"):
@@ -64,3 +65,10 @@ class ConversationsDao:
             conversations.append(conversation)
         
         return conversations
+
+    def update_conversation_analysis(self, conversation_id: str, analysis: ConversationAnalysis) -> None:
+        self.table.update_item(
+            Key={'ConversationId': conversation_id},
+            UpdateExpression='SET conversation_analysis = :analysis',
+            ExpressionAttributeValues={':analysis': asdict(analysis)}
+        )
