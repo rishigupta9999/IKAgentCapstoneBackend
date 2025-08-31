@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, fields
 from datetime import datetime
 from typing import Optional, List
 import logging
@@ -16,59 +16,18 @@ class ConversationsDao:
         self.table = self.dynamodb.Table(table_name)
 
     def save_conversation(self, conversation: Conversation) -> None:
-        # Convert turns to dict and handle datetime serialization
-        turns_data = []
-        for turn in conversation.turns:
-            turn_dict = asdict(turn)
-            turn_dict['timestamp'] = turn.timestamp.isoformat()
-            turns_data.append(turn_dict)
-        
-        item = {
-            'ConversationId': conversation.conversation_id,
-            'turns': turns_data,
-            'created_at': conversation.created_at.isoformat(),
-            'updated_at': conversation.updated_at.isoformat()
-        }
+        item = self._serialize_conversation(conversation)
         self.table.put_item(Item=item)
 
     def get_conversation(self, conversation_id: str) -> Optional[Conversation]:
         response = self.table.get_item(Key={'ConversationId': conversation_id})
         if 'Item' not in response:
             return None
-
-        item = response['Item']
-        turns = [Turn(**turn) for turn in item['turns']]
-        return Conversation(
-            conversation_id=item['ConversationId'],
-            turns=turns,
-            created_at=datetime.fromisoformat(item['created_at']),
-            updated_at=datetime.fromisoformat(item['updated_at'])
-        )
+        return self._deserialize_conversation(response['Item'])
 
     def get_all_conversations(self) -> List[Conversation]:
         response = self.table.scan()
-        conversations = []
-        
-        for item in response['Items']:
-            turns = []
-            for turn_data in item['turns']:
-                turn = Turn(
-                    id=turn_data['id'],
-                    content=turn_data['content'],
-                    speaker=turn_data['speaker'],
-                    timestamp=datetime.fromisoformat(turn_data['timestamp'])
-                )
-                turns.append(turn)
-            
-            conversation = Conversation(
-                conversation_id=item['ConversationId'],
-                turns=turns,
-                created_at=datetime.fromisoformat(item['created_at']),
-                updated_at=datetime.fromisoformat(item['updated_at'])
-            )
-            conversations.append(conversation)
-        
-        return conversations
+        return [self._deserialize_conversation(item) for item in response['Items']]
 
     def update_conversation_analysis(self, conversation_id: str, analysis: ConversationAnalysis) -> None:
         self.table.update_item(
@@ -78,3 +37,49 @@ class ConversationsDao:
         )
 
         logging.info(f"Updated analysis for conversation {conversation_id}")
+    
+    def _serialize_conversation(self, conversation: Conversation) -> dict:
+        item = asdict(conversation)
+        item['ConversationId'] = item.pop('conversation_id')
+        
+        # Convert datetime objects to ISO strings
+        for turn in item['turns']:
+            if isinstance(turn['timestamp'], datetime):
+                turn['timestamp'] = turn['timestamp'].isoformat()
+        
+        if isinstance(item['created_at'], datetime):
+            item['created_at'] = item['created_at'].isoformat()
+        if isinstance(item['updated_at'], datetime):
+            item['updated_at'] = item['updated_at'].isoformat()
+            
+        return item
+    
+    def _deserialize_conversation(self, item: dict) -> Conversation:
+        # Handle turns
+        turns = [self._deserialize_turn(turn_data) for turn_data in item['turns']]
+        
+        # Build kwargs for Conversation, handling field mapping
+        kwargs = {'conversation_id': item['ConversationId'], 'turns': turns}
+        
+        # Dynamically handle all other fields
+        conversation_fields = {f.name for f in fields(Conversation)}
+        for key, value in item.items():
+            if key == 'ConversationId' or key == 'turns':
+                continue
+            
+            field_name = key
+            if field_name in conversation_fields:
+                if field_name in ['created_at', 'updated_at'] and isinstance(value, str):
+                    kwargs[field_name] = datetime.fromisoformat(value)
+                elif field_name == 'conversation_analysis' and value:
+                    kwargs[field_name] = ConversationAnalysis(**value)
+                else:
+                    kwargs[field_name] = value
+        
+        return Conversation(**kwargs)
+    
+    def _deserialize_turn(self, turn_data: dict) -> Turn:
+        kwargs = dict(turn_data)
+        if 'timestamp' in kwargs and isinstance(kwargs['timestamp'], str):
+            kwargs['timestamp'] = datetime.fromisoformat(kwargs['timestamp'])
+        return Turn(**kwargs)
