@@ -1,26 +1,33 @@
 from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, START, END
 from typing_extensions import TypedDict
+from typing import Optional
+import logging
 
 class State(TypedDict):
-    topic: str
-    goal: str
-    success: str
+    transcript: str
+    topic: Optional[str]
+    goal: Optional[str]
+    success: Optional[str]
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class Sentiment:
     def __init__(self):
         self.llm = ChatAnthropic(model="claude-sonnet-4-20250514")
-        self.transcript = None
 
         def extract_topic(state: State):
             """Extract the topic of the transcript"""
+
+            logging.info(f"Extract topic {state}")
 
             msg = self.llm.invoke(f"""
             The followng text represents a call transcript between a call center for an electronics store and a customer.
             Extract the reason for the call.  Examples are: Return, Purchase, Technical Issue - Would Not Boot, Technical Issue - Network Dropouts, etc.
             You can come up with new reasons for the call, but keep it under one sentence.
 
-            {self.transcript}
+            {state['transcript']}
             """)
 
             return {"topic": msg.content}
@@ -34,7 +41,7 @@ class Sentiment:
             The followng text represents a call transcript between a call center for an electronics store and a customer.
 
             <transcript>
-            {self.transcript}
+            {state['transcript']}
             </transcript>
 
             The topic of the call is {state['topic']}
@@ -51,7 +58,7 @@ class Sentiment:
               The followng text represents a call transcript between a call center for an electronics store and a customer.
 
               <transcript>
-              {self.transcript}
+              {state['transcript']}
               </transcript>
 
               The topic of the call is {state['topic']}
@@ -78,5 +85,7 @@ class Sentiment:
 
 
     def analyze(self, transcript):
+        logger.info("Starting analyze")
         state = self.chain.invoke({"transcript": transcript})
-        print(state)
+        logger.info(f"Returned state {state}")
+        return state
