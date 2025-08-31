@@ -1,10 +1,14 @@
 from dataclasses import asdict
 from datetime import datetime
 from typing import Optional, List
+import logging
 import boto3
 from model.Conversation import Conversation
 from model.Turn import Turn
 from model.ConversationAnalysis import ConversationAnalysis
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class ConversationsDao:
     def __init__(self, table_name: str = "Conversations"):
@@ -72,3 +76,5 @@ class ConversationsDao:
             UpdateExpression='SET conversation_analysis = :analysis',
             ExpressionAttributeValues={':analysis': asdict(analysis)}
         )
+
+        logging.info(f"Updated analysis for conversation {conversation_id}")
