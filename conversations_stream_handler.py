@@ -4,6 +4,7 @@ import os
 from boto3.dynamodb.types import TypeDeserializer
 
 from agent.sentiment import Sentiment, State
+from agent.summarizer import Summarizer
 from dao.ConversationsDao import ConversationsDao
 from model.Conversation import Conversation
 from model.ConversationAnalysis import ConversationAnalysis
@@ -46,16 +47,19 @@ def lambda_handler(event, context):
                     logger.info(f"New Conversation: {new_conversation}")
                     
                     sentiment = Sentiment()
-                    logger.info("Successfully initiatlized sentiment")
-                    transcript = extract_transcript(new_conversation)
-                    state = sentiment.analyze(transcript)
+                    logger.info("Successfully initialized sentiment")
 
-                    # Placeholder for stream processing logic
-                    # Add your business logic here
+                    transcript = extract_transcript(new_conversation)
+                    sentiment_state = sentiment.analyze(transcript)
+
+                    summarizer = Summarizer()
+                    summary = summarizer.analyze(transcript)
+                    logger.info(f"Generated summary {summary}")
 
                     dao = ConversationsDao()
-                    dao.update_conversation_analysis(new_conversation.conversation_id, sentiment_state_to_conversation_analysis(state))
-                
+                    dao.update_conversation_analysis(new_conversation.conversation_id, sentiment_state_to_conversation_analysis(sentiment_state))
+                    dao.update_summary(new_conversation.conversation_id, summary)
+
                 if old_conversation:
                     logger.info(f"Old Conversation: {old_conversation}")
                 

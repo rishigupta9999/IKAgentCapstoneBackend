@@ -38,6 +38,15 @@ class ConversationsDao:
 
         logging.info(f"Updated analysis for conversation {conversation_id}")
     
+    def update_summary(self, conversation_id: str, summary: str) -> None:
+        self.table.update_item(
+            Key={'ConversationId': conversation_id},
+            UpdateExpression='SET summary = :summary',
+            ExpressionAttributeValues={':summary': summary}
+        )
+
+        logging.info(f"Updated summary for conversation {conversation_id}")
+    
     def _serialize_conversation(self, conversation: Conversation) -> dict:
         item = asdict(conversation)
         item['ConversationId'] = item.pop('conversation_id')

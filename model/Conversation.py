@@ -11,3 +11,4 @@ class Conversation:
     created_at: datetime
     updated_at: datetime
     conversation_analysis: ConversationAnalysis = None
+    summary: str = None

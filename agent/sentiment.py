@@ -16,17 +16,26 @@ logger.setLevel(logging.INFO)
 class Sentiment:
     def __init__(self):
         self.llm = ChatAnthropic(model="claude-sonnet-4-20250514")
+        self.fallback_llm = ChatAnthropic(model="claude-3-7-sonnet-latest")
+    
+        def _invoke_with_fallback(prompt):
+            """Invoke LLM with fallback to Claude 3.5 Sonnet on error"""
+            try:
+                return self.llm.invoke(prompt)
+            except Exception as e:
+                logging.warning(f"Claude 4 failed: {e}. Falling back to Claude 3.5 Sonnet")
+                return self.fallback_llm.invoke(prompt)
 
         def extract_topic(state: State):
             """Extract the topic of the transcript"""
 
             logging.info(f"Extract topic {state}")
 
-            msg = self.llm.invoke(f"""
-            The followng text represents a call transcript between a call center for an electronics store and a customer.
+            msg = _invoke_with_fallback(f"""
+            The following text represents a call transcript between a call center for an electronics store and a customer.
             Extract the reason for the call.  Examples are: Return, Purchase, Technical Issue - Would Not Boot, Technical Issue - Network Dropouts, etc.
             You can come up with new reasons for the call, but keep it under one sentence.
-
+    
             {state['transcript']}
             """)
 
@@ -37,15 +46,15 @@ class Sentiment:
 
             print(f'State is {state}')
 
-            msg = self.llm.invoke(f"""
-            The followng text represents a call transcript between a call center for an electronics store and a customer.
-
+            msg = _invoke_with_fallback(f"""
+            The following text represents a call transcript between a call center for an electronics store and a customer.
+    
             <transcript>
             {state['transcript']}
             </transcript>
-
+    
             The topic of the call is {state['topic']}
-
+    
             Come up with one sentence about what the goal of the customer is during this call.  What would make them happy?
             """)
 
@@ -54,17 +63,17 @@ class Sentiment:
         def evaluate_success(state: State):
             """Determine whether the outcome of the call for the customer was successful"""
 
-            msg = self.llm.invoke(f"""
-              The followng text represents a call transcript between a call center for an electronics store and a customer.
-
+            msg = _invoke_with_fallback(f"""
+              The following text represents a call transcript between a call center for an electronics store and a customer.
+    
               <transcript>
               {state['transcript']}
               </transcript>
-
+    
               The topic of the call is {state['topic']}
-
+    
               The goal of the customer is {state['goal']}
-
+    
               Evaluate how well this goal was met by outputting one of the following 3 values: Yes, Partial, No.  Only output a single word.
               """)
 
