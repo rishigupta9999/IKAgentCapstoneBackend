@@ -4,6 +4,7 @@ import os
 from boto3.dynamodb.types import TypeDeserializer
 
 from agent.sentiment import Sentiment, State
+from agent.compliance import Compliance
 from agent.summarizer import Summarizer
 from dao.ConversationsDao import ConversationsDao
 from model.Conversation import Conversation
@@ -56,9 +57,14 @@ def lambda_handler(event, context):
                     summary = summarizer.analyze(transcript)
                     logger.info(f"Generated summary {summary}")
 
+                    compliance = Compliance()
+                    compliance_output = compliance.analyze(summary, sentiment_state['topic'])
+                    logger.info(f"Compliance output is {compliance_output}")
+
                     dao = ConversationsDao()
                     dao.update_conversation_analysis(new_conversation.conversation_id, sentiment_state_to_conversation_analysis(sentiment_state))
                     dao.update_summary(new_conversation.conversation_id, summary)
+                    dao.update_compliance(new_conversation.conversation_id, compliance_output)
 
                 if old_conversation:
                     logger.info(f"Old Conversation: {old_conversation}")

@@ -12,3 +12,4 @@ class Conversation:
     updated_at: datetime
     conversation_analysis: ConversationAnalysis = None
     summary: str = None
+    compliance: str = None

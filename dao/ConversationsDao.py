@@ -47,6 +47,15 @@ class ConversationsDao:
 
         logging.info(f"Updated summary for conversation {conversation_id}")
     
+    def update_compliance(self, conversation_id: str, compliance: str) -> None:
+        self.table.update_item(
+            Key={'ConversationId': conversation_id},
+            UpdateExpression='SET compliance = :compliance',
+            ExpressionAttributeValues={':compliance': compliance}
+        )
+
+        logging.info(f"Updated compliance for conversation {conversation_id}")
+    
     def _serialize_conversation(self, conversation: Conversation) -> dict:
         item = asdict(conversation)
         item['ConversationId'] = item.pop('conversation_id')

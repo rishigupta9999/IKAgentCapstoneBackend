@@ -54,6 +54,7 @@ Resources:
       CodeUri: .
       Handler: conversations_stream_handler.lambda_handler
       Runtime: python3.9
+      MemorySize: 256
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ConversationsTable

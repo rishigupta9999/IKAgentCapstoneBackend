@@ -2,3 +2,7 @@ boto3
 langchain_core
 langchain-anthropic
 langgraph
+pinecone
+langchain_pinecone
+langchain_community
+simsimd<6.5.3
